@@ -186,17 +186,9 @@ tbody tr.cross td{background:#FBF6EC}
 tbody tr.cross:hover td{background:#F7F0E2}
 td.i-int{color:var(--interest)}
 td.i-pri{color:var(--principal)}
-td.i-extra{padding:3px 8px}
-.xin{
-  width:100%;min-width:88px;padding:5px 8px;text-align:right;
-  border:1px solid transparent;background:transparent;border-radius:2px;
-  font-family:'IBM Plex Mono',monospace;font-size:13px;font-variant-numeric:tabular-nums;
-  color:var(--ink);
-}
-.xin::placeholder{color:#C3CCD1}
-.xin:hover{border-color:var(--line)}
-.xin:focus{border-color:var(--focus);background:var(--surface)}
-.xin.has{font-weight:600;color:var(--interest);background:#FBF4E8;border-color:#EBDCC0}
+td.i-extra{color:var(--interest);font-weight:600}
+td.i-extra.zero{color:var(--faint);font-weight:400}
+
 
 footer{border-top:1px solid var(--line);background:var(--surface);padding:26px 0 40px}
 footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
@@ -274,9 +266,8 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
         <div class="field">
           <label for="recurring">Extra with every payment</label>
           <input type="number" id="recurring" value="0" min="0" step="500">
-          <p class="hint">Applies to every period. You can also type one-off amounts into the schedule below.</p>
+          <p class="hint">Added on top of the regular payment, every time. The schedule below shows exactly how it's applied.</p>
         </div>
-        <button class="btn" type="button" id="clearExtras">Clear one-off extras</button>
       </div>
     </div>
   </aside>
@@ -389,8 +380,7 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
     freq: 12,
     currency: "\u20B9",
     strategy: "term",   // "term" | "payment"
-    recurring: 0,
-    extras: {}          // { periodNumber: amount }
+    recurring: 0
   };
 
   var FREQ_WORD = {12:"month", 4:"quarter", 26:"fortnight", 52:"week"};
@@ -444,8 +434,7 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
       var room = opening - principal;
       var extra = 0;
       if(useExtras){
-        var one = state.extras[t] || 0;
-        extra = Math.min(state.recurring + one, room);
+        extra = Math.min(state.recurring, room);
         if(extra < 0) extra = 0;
       }
       var payment = principal + interest;
@@ -631,8 +620,7 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
           + '<td class="c-pay"></td>'
           + '<td class="c-pri i-pri"></td>'
           + '<td class="c-int i-int"></td>'
-          + '<td class="i-extra"><input class="xin" type="number" min="0" step="500" '
-          + 'inputmode="decimal" placeholder="—" aria-label="Extra payment at payment '+n+'"></td>'
+          + '<td class="c-extra i-extra"></td>'
           + '<td class="c-close"></td>'
           + '</tr>';
       }
@@ -641,7 +629,6 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
     }
 
     var trs = tb.children;
-    var active = document.activeElement;
     for(var j = 0; j < rows.length; j++){
       var d = rows[j], tr = trs[j];
       tr.querySelector(".c-open").textContent  = fmt(d.opening);
@@ -650,10 +637,9 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
       tr.querySelector(".c-int").textContent   = fmt(d.interest);
       tr.querySelector(".c-close").textContent = fmt(d.closing);
 
-      var input = tr.querySelector(".xin");
-      var one = state.extras[d.n] || 0;
-      if(input !== active) input.value = one ? one : "";
-      input.classList.toggle("has", one > 0);
+      var extraCell = tr.querySelector(".c-extra");
+      extraCell.textContent = d.extra > 0 ? fmt(d.extra) : "—";
+      extraCell.classList.toggle("zero", !(d.extra > 0));
 
       tr.classList.toggle("cross", d.n === plan.crossover);
       tr.classList.toggle("year-end", d.n % state.freq === 0);
@@ -707,14 +693,14 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
   ["principal","years","rate","recurring"].forEach(function(id){
     el(id).addEventListener("input", function(){
       readInputs();
-      if(id === "years"){ state.extras = {}; builtCount = -1; }
+      if(id === "years"){ builtCount = -1; }
       render();
     });
   });
   ["freq","currency"].forEach(function(id){
     el(id).addEventListener("change", function(){
       readInputs();
-      if(id === "freq"){ state.extras = {}; builtCount = -1; }
+      if(id === "freq"){ builtCount = -1; }
       render();
     });
   });
@@ -731,21 +717,6 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
   }
   el("btnTerm").addEventListener("click", function(){ setStrategy("term"); });
   el("btnPay").addEventListener("click", function(){ setStrategy("payment"); });
-
-  el("tbody").addEventListener("input", function(e){
-    var input = e.target;
-    if(!input.classList.contains("xin")) return;
-    var n = parseInt(input.closest("tr").getAttribute("data-n"), 10);
-    var v = parseFloat(input.value);
-    if(isNaN(v) || v <= 0) delete state.extras[n];
-    else state.extras[n] = v;
-    render();
-  });
-
-  el("clearExtras").addEventListener("click", function(){
-    state.extras = {};
-    render();
-  });
 
   el("exportCsv").addEventListener("click", function(){
     if(current) exportCsv(current);
