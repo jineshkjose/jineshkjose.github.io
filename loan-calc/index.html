@@ -266,7 +266,11 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
         <div class="field">
           <label for="recurring">Extra with every payment</label>
           <input type="number" id="recurring" value="0" min="0" step="500">
-          <p class="hint">Added on top of the regular payment, every time. The schedule below shows exactly how it's applied.</p>
+        </div>
+        <div class="field">
+          <label for="startFrom">Starting from payment #</label>
+          <input type="number" id="startFrom" value="1" min="1" step="1">
+          <p class="hint">If you'll only start paying extra partway through &mdash; say, once the loan itself has been running a while &mdash; enter that payment number here. Payments before it are unaffected.</p>
         </div>
       </div>
     </div>
@@ -380,7 +384,8 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
     freq: 12,
     currency: "\u20B9",
     strategy: "term",   // "term" | "payment"
-    recurring: 0
+    recurring: 0,
+    startFrom: 1
   };
 
   var FREQ_WORD = {12:"month", 4:"quarter", 26:"fortnight", 52:"week"};
@@ -433,7 +438,7 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
       var principal = Math.min(scheduled, opening);
       var room = opening - principal;
       var extra = 0;
-      if(useExtras){
+      if(useExtras && t >= state.startFrom){
         extra = Math.min(state.recurring, room);
         if(extra < 0) extra = 0;
       }
@@ -688,9 +693,10 @@ footer p{margin:0;font-size:12.5px;color:var(--faint);max-width:78ch}
     state.freq      = parseInt(el("freq").value, 10);
     state.currency  = el("currency").value;
     state.recurring = num("recurring", 0, null, 0);
+    state.startFrom = Math.round(num("startFrom", 1, null, 1));
   }
 
-  ["principal","years","rate","recurring"].forEach(function(id){
+  ["principal","years","rate","recurring","startFrom"].forEach(function(id){
     el(id).addEventListener("input", function(){
       readInputs();
       if(id === "years"){ builtCount = -1; }
