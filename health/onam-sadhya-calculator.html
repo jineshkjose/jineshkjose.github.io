@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onam Sadhya Calorie Counter</title>
+<style>
+  :root {
+    --green: #1f7a4d;
+    --green-dark: #0f4a2c;
+    --leaf: #2e8b4f;
+    --leaf-dark: #256d3d;
+    --gold: #c9962c;
+    --bg: #faf8f0;
+    --card: #ffffff;
+    --text: #2b2b2b;
+    --muted: #6b6b6b;
+    --border: #e3ddd0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(135deg, var(--gold), #a9762a);
+    color: white;
+    padding: 22px 24px;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 6px 0 0; font-size: 13px; opacity: 0.92; }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 850px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; color: var(--green); }
+  .hint { font-size: 12px; color: var(--muted); margin: -4px 0 14px; }
+
+  /* Banana leaf drop zone */
+  .leaf-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .leaf-shape {
+    position: relative;
+    width: 92%;
+    height: 88%;
+    background: radial-gradient(ellipse at 30% 30%, #3fa563, var(--leaf) 60%, var(--leaf-dark) 100%);
+    border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.15), 0 6px 18px rgba(0,0,0,0.12);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+  }
+  .leaf-shape::before {
+    /* midrib */
+    content: "";
+    position: absolute;
+    top: 4%;
+    bottom: 4%;
+    left: 50%;
+    width: 2px;
+    background: rgba(255,255,255,0.35);
+    transform: translateX(-50%);
+  }
+  .leaf-shape.dragover {
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.15), 0 0 0 4px var(--gold);
+  }
+  .leaf-items {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: center;
+    gap: 4px;
+    padding: 10%;
+    overflow-y: auto;
+  }
+  .leaf-item {
+    background: rgba(255,255,255,0.92);
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    position: relative;
+    animation: pop 0.25s ease;
+  }
+  .leaf-item .remove-x {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #b5453a;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  @keyframes pop {
+    from { transform: scale(0.4); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .leaf-empty-msg {
+    color: rgba(255,255,255,0.85);
+    font-size: 13px;
+    text-align: center;
+    padding: 0 20%;
+  }
+
+  /* Food palette */
+  .food-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 10px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .food-chip {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: grab;
+    background: #fff;
+    user-select: none;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .food-chip:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  .food-chip:active { cursor: grabbing; }
+  .food-chip .emoji { font-size: 26px; display: block; margin-bottom: 4px; }
+  .food-chip .name { font-size: 11px; font-weight: 600; line-height: 1.25; display: block; }
+  .food-chip .cal { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; }
+  .food-chip.placed { opacity: 0.4; }
+
+  /* Summary panel */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat {
+    background: #fbf3e3;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat .val { font-size: 22px; font-weight: 700; color: var(--gold); }
+  .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .served-list { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .served-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .served-list .del {
+    color: #b5453a;
+    cursor: pointer;
+    font-size: 11px;
+    background: none;
+    border: none;
+  }
+  button.primary {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  button.primary:hover { background: #185f3d; }
+  .empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); padding: 24px 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍌 Onam Sadhya Calorie Counter</h1>
+  <p>Drag dishes onto the leaf to build your sadhya and see the calorie count</p>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Your Banana Leaf</h2>
+    <p class="hint">Drag a dish from the right onto the leaf (or tap a dish on mobile) to serve it. Click an item on the leaf to remove it.</p>
+    <div class="leaf-wrap">
+      <div class="leaf-shape" id="leaf">
+        <div class="leaf-items" id="leafItems">
+          <div class="leaf-empty-msg" id="leafEmptyMsg">Your leaf is empty — start adding items from the sadhya menu!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>Sadhya Summary</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="val" id="statItems">0</div><div class="lbl">Items served</div></div>
+        <div class="stat"><div class="val" id="statCal">0</div><div class="lbl">Total calories</div></div>
+        <div class="stat"><div class="val" id="statProtein">0g</div><div class="lbl">Total protein</div></div>
+        <div class="stat"><div class="val" id="statFull">Full Sadhya</div><div class="lbl">as % of a full meal (~900 cal)</div></div>
+      </div>
+      <ul class="served-list" id="servedList"></ul>
+      <div class="empty" id="servedEmpty">Nothing served yet.</div>
+      <button class="primary" onclick="clearLeaf()">Clear Leaf</button>
+    </div>
+
+    <div class="card">
+      <h2>Sadhya Menu</h2>
+      <p class="hint">Drag any item onto the leaf, or tap it to add.</p>
+      <div class="food-grid" id="foodGrid"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Calorie and protein figures are approximate per-serving estimates for a traditional Kerala Onam Sadhya, not lab-measured values. Built for tracking, not medical advice.
+</footer>
+
+<script>
+const SADHYA_ITEMS = [
+  { id: "rice", name: "Rice", emoji: "🍚", cal: 216, protein: 4.5 },
+  { id: "sambar", name: "Sambar", emoji: "🍲", cal: 150, protein: 6 },
+  { id: "rasam", name: "Rasam", emoji: "🥣", cal: 60, protein: 2 },
+  { id: "avial", name: "Avial", emoji: "🥗", cal: 180, protein: 4 },
+  { id: "olan", name: "Olan", emoji: "🥥", cal: 130, protein: 2 },
+  { id: "kaalan", name: "Kaalan", emoji: "🍛", cal: 160, protein: 3 },
+  { id: "erissery", name: "Erissery", emoji: "🎃", cal: 150, protein: 4 },
+  { id: "thoran", name: "Thoran", emoji: "🥬", cal: 120, protein: 2 },
+  { id: "kootu", name: "Kootu Curry", emoji: "🫘", cal: 140, protein: 6 },
+  { id: "pulissery", name: "Pulissery", emoji: "🍶", cal: 140, protein: 3 },
+  { id: "kichadi", name: "Kichadi", emoji: "🥒", cal: 90, protein: 3 },
+  { id: "pachadi", name: "Pachadi", emoji: "🍍", cal: 80, protein: 2 },
+  { id: "injipuli", name: "Inji Puli", emoji: "🫚", cal: 40, protein: 0.5 },
+  { id: "pickle", name: "Naranga Achar", emoji: "🍋", cal: 20, protein: 0 },
+  { id: "pappadam", name: "Pappadam (2)", emoji: "🫓", cal: 70, protein: 2 },
+  { id: "chips", name: "Banana Chips", emoji: "🍌", cal: 150, protein: 1 },
+  { id: "sharkara", name: "Sharkara Varatti", emoji: "🍯", cal: 180, protein: 1 },
+  { id: "parippu", name: "Parippu + Ghee", emoji: "🧈", cal: 150, protein: 9 },
+  { id: "pazham", name: "Pazham (Banana)", emoji: "🍌", cal: 90, protein: 1 },
+  { id: "adapradhaman", name: "Ada Pradhaman", emoji: "🍮", cal: 250, protein: 4 },
+  { id: "paladapradhaman", name: "Palada Pradhaman", emoji: "🍮", cal: 220, protein: 5 },
+  { id: "parippupradhaman", name: "Parippu Pradhaman", emoji: "🍮", cal: 200, protein: 6 },
+];
+
+let served = []; // array of {uid, itemId}
+let uidCounter = 0;
+
+function renderFoodGrid() {
+  const grid = document.getElementById('foodGrid');
+  grid.innerHTML = '';
+  SADHYA_ITEMS.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'food-chip';
+    chip.draggable = true;
+    chip.dataset.id = item.id;
+    chip.innerHTML = `<span class="emoji">${item.emoji}</span><span class="name">${item.name}</span><span class="cal">${item.cal} cal</span>`;
+    chip.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', item.id);
+    });
+    chip.addEventListener('click', () => addToLeaf(item.id));
+    grid.appendChild(chip);
+  });
+}
+
+function addToLeaf(itemId) {
+  served.push({ uid: uidCounter++, itemId });
+  renderAll();
+}
+function removeFromLeaf(uid) {
+  served = served.filter(s => s.uid !== uid);
+  renderAll();
+}
+function clearLeaf() {
+  if (!served.length) return;
+  const ok = confirm(`Clear all ${served.length} item(s) from the leaf? This will reset the summary too.`);
+  if (!ok) return;
+  served = [];
+  renderAll();
+}
+
+function renderLeaf() {
+  const container = document.getElementById('leafItems');
+  const emptyMsg = document.getElementById('leafEmptyMsg');
+  container.innerHTML = '';
+  if (!served.length) {
+    container.appendChild(emptyMsg);
+    return;
+  }
+  served.forEach(s => {
+    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+    if (!item) return;
+    const div = document.createElement('div');
+    div.className = 'leaf-item';
+    div.title = `${item.name} — ${item.cal} cal (click to remove)`;
+    div.innerHTML = `${item.emoji}<span class="remove-x">✕</span>`;
+    div.addEventListener('click', () => removeFromLeaf(s.uid));
+    container.appendChild(div);
+  });
+}
+
+function renderSummary() {
+  const totalCal = served.reduce((sum, s) => {
+    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+    return sum + (item ? item.cal : 0);
+  }, 0);
+  const totalProtein = served.reduce((sum, s) => {
+    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+    return sum + (item ? item.protein : 0);
+  }, 0);
+  document.getElementById('statItems').textContent = served.length;
+  document.getElementById('statCal').textContent = totalCal;
+  document.getElementById('statProtein').textContent = Math.round(totalProtein * 10) / 10 + 'g';
+  document.getElementById('statFull').textContent = Math.round((totalCal / 900) * 100) + '%';
+
+  const list = document.getElementById('servedList');
+  const emptyDiv = document.getElementById('servedEmpty');
+  list.innerHTML = '';
+  emptyDiv.style.display = served.length ? 'none' : 'block';
+  served.forEach(s => {
+    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+    if (!item) return;
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${item.emoji} ${item.name} — ${item.cal} cal</span><button class="del" onclick="removeFromLeaf(${s.uid})">Remove</button>`;
+    list.appendChild(li);
+  });
+}
+
+function renderAll() {
+  renderLeaf();
+  renderSummary();
+}
+
+// Drag & drop wiring on the leaf
+const leaf = document.getElementById('leaf');
+leaf.addEventListener('dragover', e => {
+  e.preventDefault();
+  leaf.classList.add('dragover');
+});
+leaf.addEventListener('dragleave', () => leaf.classList.remove('dragover'));
+leaf.addEventListener('drop', e => {
+  e.preventDefault();
+  leaf.classList.remove('dragover');
+  const itemId = e.dataTransfer.getData('text/plain');
+  if (itemId) addToLeaf(itemId);
+});
+
+renderFoodGrid();
+renderAll();
+</script>
+</body>
+</html>
