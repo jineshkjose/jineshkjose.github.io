@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Onam Sadhya Calorie Counter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --green: #1f7a4d;
@@ -97,33 +98,33 @@
     overflow-y: auto;
   }
   .leaf-item {
-    background: rgba(255,255,255,0.92);
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 40px;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     position: relative;
     animation: pop 0.25s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+    padding: 4px;
   }
-  .leaf-item .remove-x {
+  .leaf-item .qty-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    background: #b5453a;
+    bottom: -2px;
+    right: -6px;
+    background: var(--gold);
     color: white;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
   @keyframes pop {
     from { transform: scale(0.4); opacity: 0; }
@@ -207,6 +208,45 @@
   button.primary:hover { background: #185f3d; }
   .empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
   footer { text-align: center; font-size: 12px; color: var(--muted); padding: 24px 16px; }
+button.primary + button.primary { margin-left: 8px; }
+#shareCard {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1080px;
+  height: 1920px;
+  background: linear-gradient(160deg, #145a34, #0b3a22 60%, #082c19);
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 90px 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+#shareCard .title { font-size: 58px; font-weight: 800; margin-bottom: 8px; }
+#shareCard .subtitle { font-size: 28px; opacity: 0.85; margin-bottom: 50px; }
+#shareCard .leaf-visual {
+  width: 780px;
+  height: 560px;
+  background: radial-gradient(ellipse at 30% 30%, #3fa563, #2e8b4f 60%, #1f7a4d 100%);
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 60px;
+  font-size: 62px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  margin-bottom: 60px;
+}
+#shareCard .big-stats { display: flex; gap: 60px; margin-bottom: 50px; }
+#shareCard .big-stat .num { font-size: 84px; font-weight: 800; color: #f0c96a; line-height: 1; }
+#shareCard .big-stat .lbl { font-size: 26px; opacity: 0.85; margin-top: 10px; }
+#shareCard .items-line { font-size: 28px; opacity: 0.9; max-width: 900px; line-height: 1.6; }
+#shareCard .brand { margin-top: auto; font-size: 24px; opacity: 0.6; }
 </style>
 </head>
 <body>
@@ -241,6 +281,7 @@
       <ul class="served-list" id="servedList"></ul>
       <div class="empty" id="servedEmpty">Nothing served yet.</div>
       <button class="primary" onclick="clearLeaf()">Clear Leaf</button>
+      <button class="primary" style="background: var(--gold);" onclick="downloadShareCard()">Download for WhatsApp Status</button>
     </div>
 
     <div class="card">
@@ -254,6 +295,18 @@
 <footer>
   Calorie and protein figures are approximate per-serving estimates for a traditional Kerala Onam Sadhya, not lab-measured values. Built for tracking, not medical advice.
 </footer>
+
+<div id="shareCard">
+  <div class="title">🍌 My Onam Sadhya</div>
+  <div class="subtitle" id="shareSubtitle"></div>
+  <div class="leaf-visual" id="shareLeafVisual"></div>
+  <div class="big-stats">
+    <div class="big-stat"><div class="num" id="shareCal">0</div><div class="lbl">Calories</div></div>
+    <div class="big-stat"><div class="num" id="shareProtein">0g</div><div class="lbl">Protein</div></div>
+  </div>
+  <div class="items-line" id="shareItemsLine"></div>
+  <div class="brand">Onam Sadhya Calorie Counter</div>
+</div>
 
 <script>
 const SADHYA_ITEMS = [
@@ -281,8 +334,7 @@ const SADHYA_ITEMS = [
   { id: "parippupradhaman", name: "Parippu Pradhaman", emoji: "🍮", cal: 200, protein: 6 },
 ];
 
-let served = []; // array of {uid, itemId}
-let uidCounter = 0;
+let served = {}; // { itemId: qty }
 
 function renderFoodGrid() {
   const grid = document.getElementById('foodGrid');
@@ -301,19 +353,24 @@ function renderFoodGrid() {
   });
 }
 
+function servedCount() {
+  return Object.values(served).reduce((a, b) => a + b, 0);
+}
 function addToLeaf(itemId) {
-  served.push({ uid: uidCounter++, itemId });
+  served[itemId] = (served[itemId] || 0) + 1;
   renderAll();
 }
-function removeFromLeaf(uid) {
-  served = served.filter(s => s.uid !== uid);
+function decreaseOnLeaf(itemId) {
+  if (!served[itemId]) return;
+  served[itemId] -= 1;
+  if (served[itemId] <= 0) delete served[itemId];
   renderAll();
 }
 function clearLeaf() {
-  if (!served.length) return;
-  const ok = confirm(`Clear all ${served.length} item(s) from the leaf? This will reset the summary too.`);
+  if (!servedCount()) return;
+  const ok = confirm(`Clear all ${servedCount()} item(s) from the leaf? This will reset the summary too.`);
   if (!ok) return;
-  served = [];
+  served = {};
   renderAll();
 }
 
@@ -321,32 +378,34 @@ function renderLeaf() {
   const container = document.getElementById('leafItems');
   const emptyMsg = document.getElementById('leafEmptyMsg');
   container.innerHTML = '';
-  if (!served.length) {
+  const entries = Object.entries(served);
+  if (!entries.length) {
     container.appendChild(emptyMsg);
     return;
   }
-  served.forEach(s => {
-    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+  entries.forEach(([itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
     if (!item) return;
     const div = document.createElement('div');
     div.className = 'leaf-item';
-    div.title = `${item.name} — ${item.cal} cal (click to remove)`;
-    div.innerHTML = `${item.emoji}<span class="remove-x">✕</span>`;
-    div.addEventListener('click', () => removeFromLeaf(s.uid));
+    div.title = `${item.name} — ${item.cal} cal each (click to remove one)`;
+    div.innerHTML = `${item.emoji}${qty > 1 ? `<span class="qty-badge">x${qty}</span>` : ''}`;
+    div.addEventListener('click', () => decreaseOnLeaf(itemId));
     container.appendChild(div);
   });
 }
 
 function renderSummary() {
-  const totalCal = served.reduce((sum, s) => {
-    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
-    return sum + (item ? item.cal : 0);
+  const entries = Object.entries(served);
+  const totalCal = entries.reduce((sum, [itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return sum + (item ? item.cal * qty : 0);
   }, 0);
-  const totalProtein = served.reduce((sum, s) => {
-    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
-    return sum + (item ? item.protein : 0);
+  const totalProtein = entries.reduce((sum, [itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return sum + (item ? item.protein * qty : 0);
   }, 0);
-  document.getElementById('statItems').textContent = served.length;
+  document.getElementById('statItems').textContent = servedCount();
   document.getElementById('statCal').textContent = totalCal;
   document.getElementById('statProtein').textContent = Math.round(totalProtein * 10) / 10 + 'g';
   document.getElementById('statFull').textContent = Math.round((totalCal / 900) * 100) + '%';
@@ -354,12 +413,12 @@ function renderSummary() {
   const list = document.getElementById('servedList');
   const emptyDiv = document.getElementById('servedEmpty');
   list.innerHTML = '';
-  emptyDiv.style.display = served.length ? 'none' : 'block';
-  served.forEach(s => {
-    const item = SADHYA_ITEMS.find(i => i.id === s.itemId);
+  emptyDiv.style.display = entries.length ? 'none' : 'block';
+  entries.forEach(([itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
     if (!item) return;
     const li = document.createElement('li');
-    li.innerHTML = `<span>${item.emoji} ${item.name} — ${item.cal} cal</span><button class="del" onclick="removeFromLeaf(${s.uid})">Remove</button>`;
+    li.innerHTML = `<span>${item.emoji} ${item.name}${qty > 1 ? ` x${qty}` : ''} — ${item.cal * qty} cal</span><button class="del" onclick="decreaseOnLeaf('${itemId}')">Remove one</button>`;
     list.appendChild(li);
   });
 }
@@ -382,6 +441,43 @@ leaf.addEventListener('drop', e => {
   const itemId = e.dataTransfer.getData('text/plain');
   if (itemId) addToLeaf(itemId);
 });
+
+function downloadShareCard() {
+  const entries = Object.entries(served);
+  if (!entries.length) { alert('Add some items to your leaf first!'); return; }
+  const totalCal = entries.reduce((sum, [itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return sum + (item ? item.cal * qty : 0);
+  }, 0);
+  const totalProtein = entries.reduce((sum, [itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return sum + (item ? item.protein * qty : 0);
+  }, 0);
+  const names = entries.map(([itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return item ? `${item.name}${qty > 1 ? ` x${qty}` : ''}` : '';
+  }).filter(Boolean);
+  const emojis = entries.flatMap(([itemId, qty]) => {
+    const item = SADHYA_ITEMS.find(i => i.id === itemId);
+    return item ? Array(qty).fill(item.emoji) : [];
+  });
+
+  document.getElementById('shareSubtitle').textContent = `${servedCount()} dishes on my leaf`;
+  document.getElementById('shareLeafVisual').innerHTML = emojis.map(e => `<span>${e}</span>`).join('');
+  document.getElementById('shareCal').textContent = totalCal;
+  document.getElementById('shareProtein').textContent = (Math.round(totalProtein * 10) / 10) + 'g';
+  document.getElementById('shareItemsLine').textContent = names.join(' • ');
+
+  const card = document.getElementById('shareCard');
+  html2canvas(card, { backgroundColor: null, scale: 1 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'my-onam-sadhya.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(() => {
+    alert('Could not generate the image. Make sure you have an internet connection (needed to load the image-generation library) and try again.');
+  });
+}
 
 renderFoodGrid();
 renderAll();
