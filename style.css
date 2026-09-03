@@ -136,6 +136,7 @@ a:hover { color: var(--accent-2); }
   border-radius: 2px;
 }
 .section-note { color: var(--muted); margin-top: -1rem; margin-bottom: 1.5rem; }
+.subhead { font-size: 1.15rem; margin: 2rem 0 1rem; color: var(--text); }
 
 /* ABOUT */
 .about-grid {
