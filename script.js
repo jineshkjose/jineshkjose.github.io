@@ -28,8 +28,26 @@ const certifications = [
   {
     ref: "CERT-2026-001",
     date: "2026-07-25",
-    category: "Research & Proposals",
+    category: "Publication",
     title: "Certificate of Presentation — IJCACI 2026",
+  },
+  {
+    ref: "CERT-2026-002",
+    date: "2026-07-30",
+    category: "Resource Person",
+    title: "Resource Person — DESIGNX 3D (3D Printing Design Workshop)",
+  },
+  {
+    ref: "CERT-2026-003",
+    date: "2026-07-23",
+    category: "Outreach",
+    title: "Letter of Appreciation — Chandrayaan Outreach Workshop, CKCLPS Rajagiri",
+  },
+  {
+    ref: "CERT-2026-004",
+    date: "2026-08-11",
+    category: "Teaching & Mentoring",
+    title: "Alumni Talk — Mr. Leen David (2017–21) for S5 Students",
   },
 ];
 
