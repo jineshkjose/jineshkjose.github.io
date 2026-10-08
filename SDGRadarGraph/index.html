@@ -13,6 +13,11 @@ h1{font-size:22px;font-weight:500;margin:0 0 4px}
 .sub{font-size:14px;color:var(--ink2);margin:0 0 20px}
 .card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:16px}
 h2{font-size:16px;font-weight:500;margin:0 0 12px}
+h3{font-size:15px;font-weight:500;margin:20px 0 8px;color:var(--ink)}
+.card p{margin:0 0 12px}
+.card ul,.card ol{margin:0 0 14px;padding-left:20px}
+.card li{margin-bottom:6px}
+code{font:400 13px/1.4 "Courier New",monospace;background:var(--surf1);padding:1px 5px;border-radius:4px}
 label{font-size:13px;color:var(--ink2)}
 input[type=text],input[type=number],textarea,select{font:400 14px Arial,Helvetica,sans-serif;color:var(--ink);background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:7px 9px}
 input[type=number]{width:56px;text-align:center;padding:6px 4px}
@@ -106,6 +111,71 @@ tr.tot td{border-bottom:none;font-weight:500;color:var(--ink2);padding-top:8px}
     <li>Nothing is saved — values live in the page only. Download the PNG, or keep the numbers in your spreadsheet.</li>
     <li>The page loads Chart.js from a CDN, so it needs an internet connection the first time it opens.</li>
   </ul>
+</div>
+
+<div class="card">
+  <h2>About SDG mapping</h2>
+
+  <h3>What the SDGs are</h3>
+  <p>The Sustainable Development Goals are seventeen global priorities adopted by every United Nations member state in 2015, covering poverty, health, education, equality, water, energy, work, industry, cities, consumption, climate, oceans, land, justice and partnership.</p>
+  <p>For an engineer they serve a narrower purpose: they are a shared vocabulary for stating <em>who a piece of technical work is meant to benefit</em>. A project described only in technical terms — a sensor, a mechanism, a control loop — says nothing about why it should exist. Naming the goal it serves supplies that missing half of the statement.</p>
+
+  <h3>Primary and secondary SDGs</h3>
+  <p>Most projects touch several goals, but not equally. The distinction separates purpose from consequence.</p>
+  <table style="margin-bottom:14px">
+    <thead><tr><th style="width:120px"></th><th>Primary (P)</th><th>Secondary (S)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Definition</strong></td><td>The goal the project is deliberately designed to advance</td><td>A goal it also contributes to, as a by-product of its design</td></tr>
+      <tr><td><strong>The test</strong></td><td>Remove this goal and the project loses its reason to exist</td><td>Remove this goal and the project still stands</td></tr>
+      <tr><td><strong>How many</strong></td><td>One or two per project</td><td>Zero to three per project</td></tr>
+      <tr><td><strong>Example</strong><br><span class="muted">wheelchair transport robot</span></td><td>SDG 3 health access, SDG 10 inclusion of people with mobility impairment</td><td>SDG 9 the engineering itself, SDG 11 accessible facilities</td></tr>
+    </tbody>
+  </table>
+  <p>Without the distinction, teams claim every goal that sounds plausible and the mapping becomes meaningless — a habit sometimes called SDG-washing. Forcing a choice makes the team articulate what the project is actually for, and it allows honest aggregation: a primary contribution is normally weighted 1 and a secondary 0.5, so a project that merely brushes a goal does not count the same as one built around it.</p>
+
+  <h3>SDG targets</h3>
+  <p>Beneath the seventeen goals sit 169 numbered targets — the specific commitments that give each goal meaning. Citing the target rather than the goal is more precise and far easier to defend.</p>
+  <table style="margin-bottom:14px">
+    <thead><tr><th style="width:150px">Form</th><th>Meaning</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>3.8</code> numeric</td><td>An outcome target — what should change in the world</td><td>Achieve universal health coverage and access to essential health services</td></tr>
+      <tr><td><code>9.c</code> lettered</td><td>A means-of-implementation target — the finance, technology or capacity needed</td><td>Significantly increase access to information and communications technology</td></tr>
+    </tbody>
+  </table>
+  <p>Compare the two statements. “This project addresses SDG 3” says almost nothing, since SDG 3 spans maternal mortality, epidemics, road deaths and tobacco. “This project addresses target 3.8, access to essential health services in underserved areas” is a claim that can be examined and either supported or rejected.</p>
+  <p class="muted">Choose targets that genuinely match. A railway inspection robot does not address 3.6 (road traffic deaths) however close it sounds; a project improving nutritional quality fits 2.2 (end malnutrition) rather than 2.1 (access to food). A wrong target is worse than no target — it signals the mapping was not thought through.</p>
+
+  <h3>Why identify SDGs in a project</h3>
+  <ul>
+    <li><strong>Accreditation requires it.</strong> Under the Washington Accord graduate attributes, PO6 — The Engineer and the World — requires students to analyse and evaluate sustainable development impacts on society, the economy, health and safety, legal frameworks and the environment. An SDG mapping is the most direct evidence a course file can offer. Knowledge profiles WK5 and WK7 are evidenced the same way.</li>
+    <li><strong>It improves the project.</strong> Deciding on a primary goal forces the team to answer who benefits and how much — a question that routinely exposes a weak problem statement while there is still time to fix it.</li>
+    <li><strong>It is required outside the college.</strong> National innovation competitions organise their themes around the goals, a growing number of journals ask authors to tag submissions by SDG, and funding proposals almost always ask.</li>
+    <li><strong>It gives the department a picture of itself.</strong> Aggregated across a batch, the mapping shows where the department concentrates and which goals it never touches — direct input to next year's topic selection.</li>
+  </ul>
+
+  <h3>Why a radar chart suits this data</h3>
+  <p>SDG coverage is seventeen numbers that belong together, and a radar chart is one of the few forms that shows all seventeen at once as a single readable object.</p>
+  <ul>
+    <li><strong>It shows profile, not just values.</strong> The eye reads the overall shape immediately — whether a department is concentrated in two or three goals or spread thinly across many.</li>
+    <li><strong>It supports comparison.</strong> Two or three profiles on the same axes make differences obvious in a way separate bar charts do not. Comparing batches year on year shows drift in emphasis.</li>
+    <li><strong>It makes gaps visible.</strong> Spokes that stay at the centre are as informative as the peaks — they identify goals never addressed.</li>
+  </ul>
+  <p style="margin-bottom:6px"><strong>Its limits, worth understanding before using it:</strong></p>
+  <ul class="muted" style="margin-top:0">
+    <li>The scale is usually relative. When scores are normalised so the strongest goal becomes 5, some goal always reaches the outer ring — charts compare shape, not magnitude.</li>
+    <li>Enclosed area is not a meaningful quantity. It changes with the order of the spokes, which is arbitrary, so area should never be read as total contribution.</li>
+    <li>It is poor for a single project. One project maps two to four goals, giving a few spikes against a flat field; a bar chart of just the mapped goals communicates that better.</li>
+  </ul>
+
+  <h3>In practice</h3>
+  <ol>
+    <li>State the problem and who it serves, before looking at the goal list.</li>
+    <li>Choose one or two primary goals — the ones the project exists to advance.</li>
+    <li>Add secondary goals only where the contribution is real, not merely plausible.</li>
+    <li>Name the specific targets under each goal, and check the wording actually matches.</li>
+    <li>Write one sentence on how the project contributes. If that sentence is hard to write, the mapping is probably wrong.</li>
+    <li>Record it in the department SDG matrix so it aggregates into the batch profile.</li>
+  </ol>
 </div>
 
 <div class="card">
